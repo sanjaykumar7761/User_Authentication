@@ -30,6 +30,7 @@ public class SignupDto {
 
     private String lastName;
 
+    private String captcha;
 
 }
 

@@ -14,5 +14,6 @@ public class LoginDto {
     @NotBlank(message = "Password is required")
     private String password;
 
+    private String captcha;
 
 }

@@ -2,12 +2,16 @@ package com.User_Authentication.security;
 
 
 
+import com.User_Authentication.entity.User;
+import com.User_Authentication.repository.UserRepository;
 import io.jsonwebtoken.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.Optional;
 
 @Component
 public class JwtTokenProvider {
@@ -17,6 +21,9 @@ public class JwtTokenProvider {
 
     @Value("${app.jwt-expiration-milliseconds}")
     private int jwtExpirationInMs;
+
+    @Autowired
+    private UserRepository userRepository;
 
 
 
@@ -64,7 +71,24 @@ public class JwtTokenProvider {
                 .compact();
     }
 
+          public String captchaGenerate(String email) throws Exception{
+              String s="qwertyuiopasdfghjklzxcvbnmASDFGHJKLPOIUYTREWQZXCVBNM012" +
+                      "3456789";
+              String captcha="";
+              for (int i=0;i<5;i++){
+                  int index=(int)(Math.random()*62);
+                  captcha+=s.charAt(index);
+              }
+              Optional<User> byEmail = userRepository.findByEmail(email);
+              if (!byEmail.isPresent()){
+                  throw new Exception("Data is not found for this email"+byEmail);
+              }
+              User user = byEmail.get();
+              user.setCaptcha(captcha);
+              userRepository.save(user);
 
+              return captcha;
+          }
 
 
 

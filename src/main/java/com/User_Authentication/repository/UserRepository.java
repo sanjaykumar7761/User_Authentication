@@ -15,5 +15,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 
     User findByResetToken(String token);
+
+    Optional<User> findByCaptcha(String captcha);
 }
 

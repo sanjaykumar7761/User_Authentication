@@ -18,7 +18,7 @@ public class LoginDto {
     @NotBlank(message = "OTP is required")
     private String otp;
 
-//    @NotBlank(message = "captcha is required")
-//    private String captcha;
+    @NotBlank(message = "captcha is required")
+    private String captcha;
 
 }

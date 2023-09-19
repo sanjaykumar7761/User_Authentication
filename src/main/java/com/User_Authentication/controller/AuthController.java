@@ -79,7 +79,7 @@ public class AuthController {
                 String mobileNumber = loginDto.getMobileNumber();
                 String userEnteredOtp = loginDto.getOtp();
                 String storedOtp = otpCache.get(mobileNumber);
-                System.out.println(storedOtp);
+
 
                 if (userEnteredOtp.equals(storedOtp)) {
                     // OTP is correct, proceed with authentication
@@ -104,6 +104,15 @@ public class AuthController {
 
                 token = jwtTokenProvider.createToken(loginDto.getUsernameOrEmail());
             }
+
+            //captcha
+            Optional<User> byCaptcha = userRepository.findByCaptcha(loginDto.getCaptcha());
+            try {
+                String captcha = byCaptcha.get().getCaptcha();
+            }catch (Exception e){
+                return new ResponseEntity<>("Enter valid captcha",HttpStatus.OK);
+            }
+
             return ResponseEntity.ok(new JWTAuthResponse(token));
 
         } catch (BadCredentialsException e) {

@@ -14,6 +14,11 @@ public class LoginDto {
     @NotBlank(message = "Password is required")
     private String password;
 
-    private String captcha;
+    private String mobileNumber;
+    @NotBlank(message = "OTP is required")
+    private String otp;
+
+//    @NotBlank(message = "captcha is required")
+//    private String captcha;
 
 }

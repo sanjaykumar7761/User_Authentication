@@ -49,6 +49,13 @@ public class User {
 
     private String captcha;
 
+    @Column(unique = true)
+    private String mobileNumber;
+    private String otp;
+    private Date otpExpiration;
+
+
+
 
     @Column(name = "reset_token")
     private String resetToken;

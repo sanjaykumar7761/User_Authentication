@@ -70,6 +70,12 @@
 			<artifactId>jjwt</artifactId>
 			<version>0.9.1</version> <!-- Replace with the latest version available -->
 		</dependency>
+		<dependency>
+			<groupId>com.twilio.sdk</groupId>
+			<artifactId>twilio</artifactId>
+			<version>8.34.0</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>

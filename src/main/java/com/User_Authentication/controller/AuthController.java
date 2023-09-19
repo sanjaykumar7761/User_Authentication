@@ -11,6 +11,7 @@ import com.User_Authentication.repository.RoleRepository;
 import com.User_Authentication.repository.UserRepository;
 
 import com.User_Authentication.security.JwtTokenProvider;
+import com.User_Authentication.service.OtpService;
 import com.User_Authentication.util.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,6 +47,12 @@ public class AuthController {
 
     private final JwtTokenProvider jwtTokenProvider;
 
+
+    @Autowired
+    private OtpService otpService;
+
+    private Map<String, String> otpCache = new HashMap<>();
+
     private AuthenticationManager authenticationManager;
     @Value("${app.jwt-expiration-milliseconds}")
     private long jwtExpirationInMs;
@@ -65,21 +72,38 @@ public class AuthController {
     public ResponseEntity<?> login(@Valid @RequestBody LoginDto loginDto,
                                    @RequestParam(value = "rememberMe", required = false) boolean rememberMe) {
         try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginDto.getUsernameOrEmail(), loginDto.getPassword())
-            );
+            String token = null;
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            if (loginDto.getOtp() != null && !loginDto.getOtp().isEmpty()) {
+                // Verify OTP
+                String mobileNumber = loginDto.getMobileNumber();
+                String userEnteredOtp = loginDto.getOtp();
+                String storedOtp = otpCache.get(mobileNumber);
+                System.out.println(storedOtp);
 
-            String token = jwtTokenProvider.createToken(loginDto.getUsernameOrEmail());
+                if (userEnteredOtp.equals(storedOtp)) {
+                    // OTP is correct, proceed with authentication
+                    Authentication authentication = authenticationManager.authenticate(
+                            new UsernamePasswordAuthenticationToken(loginDto.getUsernameOrEmail(), loginDto.getPassword())
+                    );
 
-            Optional<User> byCaptcha = userRepository.findByCaptcha(loginDto.getCaptcha());
-            try {
-                String captcha = byCaptcha.get().getCaptcha();
-            }catch (Exception e){
-                return new ResponseEntity<>("Enter valid captcha",HttpStatus.OK);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                    token = jwtTokenProvider.createToken(loginDto.getUsernameOrEmail());
+                } else {
+                    // Incorrect OTP
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Incorrect OTP.");
+                }
+            } else {
+                // If no OTP is provided, perform traditional username/email and password-based authentication
+                Authentication authentication = authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(loginDto.getUsernameOrEmail(), loginDto.getPassword())
+                );
+
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                token = jwtTokenProvider.createToken(loginDto.getUsernameOrEmail());
             }
-
             return ResponseEntity.ok(new JWTAuthResponse(token));
 
         } catch (BadCredentialsException e) {
@@ -262,6 +286,25 @@ public class AuthController {
         }
         String captcha = jwtTokenProvider.captchaGenerate(email);
         return new ResponseEntity<>(captcha,HttpStatus.OK);
+
+        //            Optional<User> byCaptcha = userRepository.findByCaptcha(loginDto.getCaptcha());
+//            try {
+//                String captcha = byCaptcha.get().getCaptcha();
+//            }catch (Exception e){
+//                return new ResponseEntity<>("Enter valid captcha",HttpStatus.OK);
+//            } this code for login
+    }
+
+    //http:localhost:8080/api/auth/sendOtp
+
+
+    @PostMapping("/sendOtp")
+    public void sendOtp(@RequestBody LoginDto loginDto) {
+        String mobileNumber = loginDto.getMobileNumber();
+        String otp = otpService.generateOtp();
+        otpService.sendOtp(mobileNumber, otp);
+        // Store OTP in cache for verification
+        otpCache.put(mobileNumber, otp);
     }
 
 }
